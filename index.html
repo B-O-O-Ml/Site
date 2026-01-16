@@ -135,7 +135,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-gray-100 tracking-tight">CodeVault</h1>
-                <div class="text-[10px] text-cyan-500 font-mono tracking-wider">ULTIMA v2.1</div>
+                <div class="text-[10px] text-cyan-500 font-mono tracking-wider">ULTIMA v2.2</div>
             </div>
         </div>
 
@@ -408,18 +408,44 @@
     </main>
 
     <!-- Raw Link Modal -->
-    <dialog id="raw-modal" class="bg-[#1e293b] text-white rounded-xl shadow-2xl border border-gray-700 p-0 backdrop:bg-black/80 max-w-lg w-full m-auto open:animate-slide-up">
+    <dialog id="raw-modal" class="bg-[#1e293b] text-white rounded-xl shadow-2xl border border-gray-700 p-0 backdrop:bg-black/80 max-w-lg w-full m-auto open:animate-slide-up overflow-hidden">
         <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-[#111827]">
-            <h3 class="font-bold text-sm uppercase tracking-wider text-cyan-500"><i class="fa-solid fa-link mr-2"></i>Raw Link Generator</h3>
+            <h3 class="font-bold text-sm uppercase tracking-wider text-cyan-500"><i class="fa-solid fa-link mr-2"></i>Export Options</h3>
             <button onclick="document.getElementById('raw-modal').close()" class="text-gray-500 hover:text-white p-2"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="p-6 space-y-4">
-            <p class="text-sm text-gray-400">This temporary blob URL allows you to view the code in its raw text format in a new tab.</p>
-            <div class="flex gap-2">
-                <input type="text" id="raw-link-input" readonly class="flex-1 bg-[#0f172a] border border-gray-600 rounded px-3 py-2 text-xs font-mono text-cyan-400 select-all">
-                <a id="raw-link-btn" href="#" target="_blank" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded text-xs font-bold flex items-center gap-2">
-                    Open <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                </a>
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-700 bg-gray-800/50">
+            <button onclick="app.switchRawTab('browser')" id="tab-browser" class="flex-1 py-3 text-xs font-bold text-cyan-400 border-b-2 border-cyan-400 transition-colors">Browser (Blob)</button>
+            <button onclick="app.switchRawTab('roblox')" id="tab-roblox" class="flex-1 py-3 text-xs font-bold text-gray-400 hover:text-white transition-colors">Roblox Executor</button>
+        </div>
+
+        <div class="p-6">
+            <!-- Browser Tab -->
+            <div id="content-browser" class="space-y-4">
+                <p class="text-xs text-gray-400">View code raw in a new browser tab. (Local Session Only)</p>
+                <div class="flex gap-2">
+                    <input type="text" id="raw-link-input" readonly class="flex-1 bg-[#0f172a] border border-gray-600 rounded px-3 py-2 text-xs font-mono text-cyan-400 select-all">
+                    <a id="raw-link-btn" href="#" target="_blank" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded text-xs font-bold flex items-center gap-2 whitespace-nowrap">
+                        Open <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Roblox Tab -->
+            <div id="content-roblox" class="hidden space-y-4">
+                <div class="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded text-[10px] text-yellow-200">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Blob URLs cannot be used with <code>game:HttpGet</code>. Use this loadstring method instead.
+                </div>
+                
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Generated Script (Click to Copy)</label>
+                    <textarea id="roblox-script-output" readonly class="w-full h-24 bg-[#0f172a] border border-gray-600 rounded p-3 text-xs font-mono text-green-400 resize-none focus:outline-none focus:border-green-500 cursor-pointer" onclick="app.copyRobloxScript()"></textarea>
+                </div>
+                
+                <button onclick="app.copyRobloxScript()" class="w-full bg-green-600 hover:bg-green-500 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-2">
+                    <i class="fa-regular fa-copy"></i> Copy Script to Clipboard
+                </button>
             </div>
         </div>
     </dialog>
@@ -1069,14 +1095,56 @@
                 }
             }
 
+            // --- Raw Link / Export Logic ---
+
             generateRawLink() {
                 const content = document.getElementById('code-input').value;
                 if(!content) { this.toast('Buffer Empty', 'error'); return; }
+                
+                // Browser Blob URL
                 const blob = new Blob([content], {type: 'text/plain'});
                 const url = URL.createObjectURL(blob);
                 document.getElementById('raw-link-input').value = url;
                 document.getElementById('raw-link-btn').href = url;
+                
+                // Reset Tab
+                this.switchRawTab('browser');
                 document.getElementById('raw-modal').showModal();
+            }
+
+            switchRawTab(tab) {
+                document.getElementById('tab-browser').className = `flex-1 py-3 text-xs font-bold transition-colors ${tab === 'browser' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white'}`;
+                document.getElementById('tab-roblox').className = `flex-1 py-3 text-xs font-bold transition-colors ${tab === 'roblox' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white'}`;
+                
+                document.getElementById('content-browser').classList.toggle('hidden', tab !== 'browser');
+                document.getElementById('content-roblox').classList.toggle('hidden', tab !== 'roblox');
+
+                if(tab === 'roblox') {
+                    this.renderRobloxScript();
+                }
+            }
+
+            renderRobloxScript() {
+                const rawCode = document.getElementById('code-input').value;
+                
+                // Handle Lua multiline string limits (need to ensure equal signs are unique)
+                // Default: [[ ... ]]
+                // If code contains ]], change to [=[ ... ]=], etc.
+                
+                let eq = "";
+                while(rawCode.includes(`]${eq}]`)) {
+                    eq += "=";
+                }
+
+                const script = `loadstring([${eq}[${rawCode}]${eq}])()`;
+                document.getElementById('roblox-script-output').value = script;
+            }
+
+            copyRobloxScript() {
+                const el = document.getElementById('roblox-script-output');
+                el.select();
+                document.execCommand('copy');
+                this.toast('Script Copied to Clipboard', 'success');
             }
         }
 
