@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CodeVault Ultima - Dev Command Center</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Syntax Highlighting (PrismJS) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #0f172a;      /* slate-950 */
+            --bg-panel: #1e293b;     /* slate-800 */
+            --accent: #22d3ee;       /* cyan-400 */
+            --accent-glow: rgba(34, 211, 238, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: #e2e8f0;
+        }
+
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Editor Overlay Magic */
+        .editor-wrapper {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #1a1b26; /* Deep Editor BG */
+            border-radius: 0.5rem;
+        }
+        #code-display, #code-input {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            padding: 1.5rem; margin: 0; border: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px; line-height: 1.6;
+            white-space: pre; overflow: auto; tab-size: 4;
+        }
+        #code-display { pointer-events: none; z-index: 1; background: transparent !important; }
+        #code-input { z-index: 2; color: transparent; background: transparent; caret-color: var(--accent); resize: none; outline: none; }
+
+        /* Animations */
+        @keyframes blink { 50% { opacity: 0; } }
+        .cursor-blink::after { content: '|'; animation: blink 1s infinite; color: var(--accent); margin-left: 2px; }
+        
+        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Chart Strict Sizing */
+        .chart-container { position: relative; width: 100%; height: 220px; }
+
+        /* Glassmorphism Hints */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Folder Styles */
+        .folder-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .folder-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #334155;
+            opacity: 0.5;
+        }
+
+        /* Hitbox improvements */
+        .clickable-area {
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <!-- Toast -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" onclick="app.toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-[#111827] border-r border-gray-800 flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl">
+        <!-- Brand -->
+        <div class="h-16 flex items-center gap-3 px-6 border-b border-gray-800 bg-[#0f172a]">
+            <div class="w-8 h-8 rounded bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <i class="fa-solid fa-code"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-gray-100 tracking-tight">CodeVault</h1>
+                <div class="text-[10px] text-cyan-500 font-mono tracking-wider">ULTIMA v2.1</div>
+            </div>
+        </div>
+
+        <!-- Menu -->
+        <nav class="p-4 space-y-1">
+            <button onclick="app.navTo('dashboard')" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-all group">
+                <i class="fa-solid fa-gauge-high w-5 text-center group-hover:text-cyan-400 transition-colors"></i> Command Center
+            </button>
+            <button onclick="app.createNewFile()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-all group">
+                <i class="fa-solid fa-plus w-5 text-center group-hover:text-cyan-400 transition-colors"></i> New Repository
+            </button>
+        </nav>
+
+        <!-- File List Header -->
+        <div class="px-6 pt-4 pb-2">
+            <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Repositories</div>
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-600 text-xs"></i>
+                <input type="text" id="search-input" placeholder="Search files..." 
+                       class="w-full pl-9 pr-3 py-2 text-xs bg-gray-900 border border-gray-700 rounded-md focus:border-cyan-500 focus:outline-none text-gray-300 placeholder-gray-600 transition-colors">
+            </div>
+        </div>
+
+        <!-- File List -->
+        <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="file-list">
+            <!-- Items injected by JS -->
+        </div>
+
+        <!-- Footer: Client ID -->
+        <div class="p-4 border-t border-gray-800 bg-[#0f172a]">
+            <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                <span><i class="fa-solid fa-shield-cat mr-1"></i>SECURE ID</span>
+                <span id="connection-status" class="text-emerald-500">Connected</span>
+            </div>
+            <div class="flex gap-2 items-center bg-gray-900/50 rounded border border-gray-800 p-1.5 group hover:border-cyan-500/30 transition-colors cursor-pointer" onclick="app.copyClientId()">
+                <code id="display-client-id" class="flex-1 text-[10px] text-gray-400 truncate code-font">...</code>
+                <i class="fa-regular fa-copy text-gray-600 group-hover:text-cyan-400"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-[#0f172a] md:ml-72 transition-all">
+        
+        <!-- Mobile Header -->
+        <header class="md:hidden h-14 bg-[#0f172a] border-b border-gray-800 px-4 flex justify-between items-center z-20">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-cyan-600 rounded flex items-center justify-center text-white text-xs">CV</div>
+                <span class="font-bold text-gray-200 text-sm">Ultima</span>
+            </div>
+            <button onclick="app.toggleSidebar()" class="text-gray-400 w-10 h-10 flex items-center justify-center"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <!-- View Container -->
+        <div id="view-container" class="flex-1 overflow-y-auto relative scroll-smooth">
+            
+            <!-- 1. DASHBOARD: "Command Center" -->
+            <div id="view-dashboard" class="p-6 md:p-10 max-w-7xl mx-auto min-h-full flex flex-col">
+                
+                <!-- Header with Typing Effect -->
+                <div class="mb-8">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-2 cursor-blink" id="welcome-msg"></h2>
+                    <p class="text-gray-500 text-sm md:text-base">System operational. Ready for input.</p>
+                </div>
+
+                <!-- Quick Actions Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-slide-up" style="animation-delay: 0.1s;">
+                    <button onclick="app.createNewFile()" class="glass-panel p-4 rounded-xl hover:bg-gray-800/80 transition-all group text-left border-l-4 border-transparent hover:border-cyan-400">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-plus text-lg"></i>
+                        </div>
+                        <div class="font-bold text-gray-200">New Project</div>
+                        <div class="text-xs text-gray-500 mt-1">Start from scratch</div>
+                    </button>
+                    
+                    <button onclick="app.togglePanel('fetch', true)" class="glass-panel p-4 rounded-xl hover:bg-gray-800/80 transition-all group text-left border-l-4 border-transparent hover:border-purple-400">
+                        <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fa-brands fa-github text-lg"></i>
+                        </div>
+                        <div class="font-bold text-gray-200">Import Raw</div>
+                        <div class="text-xs text-gray-500 mt-1">From GitHub/Url</div>
+                    </button>
+
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-transparent hover:border-emerald-400">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-database text-lg"></i>
+                        </div>
+                        <div class="font-bold text-gray-200" id="dash-total-files">0 Files</div>
+                        <div class="text-xs text-gray-500 mt-1">Stored locally</div>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-transparent hover:border-pink-400">
+                        <div class="w-10 h-10 rounded-lg bg-pink-500/10 text-pink-400 flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-code-branch text-lg"></i>
+                        </div>
+                        <div class="font-bold text-gray-200" id="dash-languages">0 Langs</div>
+                        <div class="text-xs text-gray-500 mt-1">Diverse Stack</div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up" style="animation-delay: 0.2s;">
+                    
+                    <!-- Recent Activity (Timeline Style) -->
+                    <div class="lg:col-span-2 glass-panel rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold text-gray-200 flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-gray-500"></i> Recent Activity
+                            </h3>
+                            <span class="text-xs text-gray-500 px-2 py-1 rounded bg-gray-800 border border-gray-700">Latest Updates</span>
+                        </div>
+                        <div id="recent-activity-list" class="space-y-0">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Stats & Graph -->
+                    <div class="glass-panel rounded-xl p-6 flex flex-col gap-6">
+                        <div>
+                            <h3 class="font-bold text-gray-200 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-simple text-gray-500"></i> Analytics
+                            </h3>
+                            <div class="chart-container mb-4">
+                                <canvas id="chart-languages"></canvas>
+                            </div>
+                            <div class="mt-auto pt-4 border-t border-gray-700/50">
+                                <div class="flex justify-between items-center text-xs text-gray-400">
+                                    <span>Storage Used</span>
+                                    <span id="storage-used">Calculating...</span>
+                                </div>
+                                <div class="w-full bg-gray-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                                    <div id="storage-bar" class="bg-cyan-500 h-full rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Management Section -->
+                        <div class="pt-6 border-t border-gray-700/50">
+                             <h3 class="font-bold text-gray-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                <i class="fa-solid fa-server text-gray-500"></i> System Backup
+                            </h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="app.exportData()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 px-3 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-file-export"></i> EXPORT
+                                </button>
+                                <label class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 px-3 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                                    <i class="fa-solid fa-file-import"></i> IMPORT
+                                    <input type="file" id="import-file" hidden onchange="app.importData(this)">
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-gray-600 mt-2">Export format: .json | Includes all repositories & metadata.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. EDITOR VIEW -->
+            <div id="view-editor" class="hidden h-full flex flex-col bg-[#0f172a]">
+                
+                <!-- Toolbar -->
+                <div class="h-14 border-b border-gray-800 bg-[#0f172a] flex items-center justify-between px-4 shrink-0 relative z-20">
+                    <div class="flex items-center gap-3 overflow-hidden flex-1 mr-4">
+                        <div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-cyan-400 text-sm border border-gray-700 shrink-0">
+                            <i id="current-lang-icon" class="fa-solid fa-code"></i>
+                        </div>
+                        <input type="text" id="file-name-input" placeholder="folder/filename.ext" 
+                               class="bg-transparent text-gray-200 font-mono text-sm w-full focus:outline-none placeholder-gray-600 font-bold"
+                               title="Tip: Use '/' to create folders (e.g. ProjectA/script.js)">
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-1 md:gap-2">
+                        <!-- Desktop -->
+                        <div class="hidden md:flex items-center gap-2 border-r border-gray-700 pr-3 mr-1">
+                             <select id="language-select" onchange="app.changeLanguage()" class="bg-gray-900 border border-gray-700 text-gray-300 text-xs rounded px-2 py-1.5 focus:border-cyan-500 outline-none hover:bg-gray-800 transition-colors cursor-pointer max-w-[100px] md:max-w-none">
+                                <option value="javascript">JavaScript</option>
+                                <option value="html">HTML</option>
+                                <option value="css">CSS</option>
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                                <option value="cpp">C++</option>
+                                <option value="csharp">C#</option>
+                                <option value="lua">Lua / Luau</option>
+                                <option value="json">JSON</option>
+                                <option value="sql">SQL</option>
+                                <option value="bash">Bash</option>
+                                <option value="go">Go</option>
+                                <option value="rust">Rust</option>
+                            </select>
+                            
+                            <button onclick="app.togglePanel('fetch')" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors" title="Fetch URL"><i class="fa-solid fa-cloud-arrow-down"></i></button>
+                            <button onclick="app.togglePanel('security')" id="btn-security" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors" title="Security"><i class="fa-solid fa-shield-halved"></i></button>
+                            <button onclick="app.generateRawLink()" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors" title="Get Raw Link"><i class="fa-solid fa-link"></i></button>
+                        </div>
+                        
+                        <!-- Mobile Toggle -->
+                        <button onclick="app.toggleMobileTools()" class="md:hidden w-8 h-8 text-gray-400 hover:text-white"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+
+                        <button onclick="app.saveFile()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 shadow-[0_0_10px_rgba(8,145,178,0.4)] transition-all">
+                            <i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">SAVE</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Utility Panel -->
+                <div id="tools-panel" class="hidden absolute top-14 right-0 md:right-4 w-full md:w-96 bg-[#1e293b] border-b md:border border-gray-700 p-4 shadow-xl z-30 animate-slide-up rounded-b-lg md:rounded-lg">
+                    <button onclick="app.closePanel()" class="absolute top-2 right-2 p-2 text-gray-500 hover:text-white hover:bg-gray-700 rounded-full transition-colors"><i class="fa-solid fa-times text-lg"></i></button>
+                    <div id="panel-content"></div>
+                </div>
+
+                <!-- Editor Surface -->
+                <div class="flex-1 p-0 md:p-0 relative flex flex-col bg-[#0f172a]">
+                    <div class="flex-1 relative overflow-hidden">
+                        <div class="editor-wrapper">
+                            <pre id="code-display" aria-hidden="true"><code class="language-javascript" id="code-highlight"></code></pre>
+                            <!-- Spellcheck false to prevent red underlines, autocomplete off for raw code feel -->
+                            <textarea id="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+                                      placeholder="// Start coding..." 
+                                      oninput="app.handleInput()" 
+                                      onscroll="app.syncScroll()" 
+                                      onkeydown="app.handleTab(event)"
+                                      onclick="app.updateCursorStats()"
+                                      onkeyup="app.updateCursorStats()"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Bar -->
+                    <div class="h-6 bg-[#007acc] md:bg-[#1e293b] text-white md:text-gray-400 text-[10px] flex items-center justify-between px-3 font-mono select-none z-20">
+                        <div class="flex gap-4">
+                            <span id="editor-status"><i class="fa-solid fa-code-branch mr-1"></i>main*</span>
+                            <span id="cursor-pos">Ln 1, Col 1</span>
+                        </div>
+                        <div class="flex gap-4">
+                            <span id="lang-display">JavaScript</span>
+                            <span id="char-count">0 chars</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. LOCKED VIEW -->
+            <div id="view-locked" class="hidden h-full flex flex-col items-center justify-center p-6 text-center animate-fade-in bg-[#0f172a]">
+                <div class="w-24 h-24 rounded-full border-4 border-red-500/30 flex items-center justify-center mb-6 relative">
+                    <div class="absolute inset-0 bg-red-500/10 rounded-full animate-pulse"></div>
+                    <i class="fa-solid fa-user-lock text-4xl text-red-500"></i>
+                </div>
+                
+                <h2 class="text-3xl font-bold text-white mb-2 tracking-tight">ACCESS RESTRICTED</h2>
+                <div class="h-1 w-16 bg-red-600 mx-auto mb-4 rounded"></div>
+                <p class="text-gray-400 text-sm max-w-md mb-8" id="lock-message">Security protocols active.</p>
+                
+                <div id="password-challenge" class="w-full max-w-sm space-y-4 hidden animate-slide-up">
+                    <input type="password" id="unlock-password" placeholder="Enter Passkey..." 
+                           class="w-full px-4 py-3 bg-[#111827] border border-gray-700 rounded text-center text-white focus:border-red-500 focus:outline-none font-mono tracking-widest placeholder-gray-600 transition-colors">
+                    <button onclick="app.unlockFile()" class="w-full py-3 bg-red-600/90 text-white rounded font-bold hover:bg-red-500 transition-colors shadow-[0_0_15px_rgba(220,38,38,0.4)]">
+                        AUTHENTICATE
+                    </button>
+                </div>
+
+                <div id="client-id-error" class="hidden bg-red-950/40 border border-red-500/30 p-6 rounded-xl text-red-400 text-sm max-w-md backdrop-blur-sm animate-slide-up">
+                    <p class="font-bold text-lg mb-2"><i class="fa-solid fa-fingerprint mr-2"></i>Unrecognized Device</p>
+                    <p class="text-red-300/70 mb-4">This repository is hardware-locked to a different Client ID.</p>
+                    <div class="pt-3 border-t border-red-500/20 text-xs font-mono">
+                        <span class="opacity-50">YOUR ID:</span> <span id="error-your-id" class="text-white">...</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Raw Link Modal -->
+    <dialog id="raw-modal" class="bg-[#1e293b] text-white rounded-xl shadow-2xl border border-gray-700 p-0 backdrop:bg-black/80 max-w-lg w-full m-auto open:animate-slide-up">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-[#111827]">
+            <h3 class="font-bold text-sm uppercase tracking-wider text-cyan-500"><i class="fa-solid fa-link mr-2"></i>Raw Link Generator</h3>
+            <button onclick="document.getElementById('raw-modal').close()" class="text-gray-500 hover:text-white p-2"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+            <p class="text-sm text-gray-400">This temporary blob URL allows you to view the code in its raw text format in a new tab.</p>
+            <div class="flex gap-2">
+                <input type="text" id="raw-link-input" readonly class="flex-1 bg-[#0f172a] border border-gray-600 rounded px-3 py-2 text-xs font-mono text-cyan-400 select-all">
+                <a id="raw-link-btn" href="#" target="_blank" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded text-xs font-bold flex items-center gap-2">
+                    Open <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        class CodeVault {
+            constructor() {
+                this.files = JSON.parse(localStorage.getItem('cv_ultima_db')) || [];
+                this.clientId = localStorage.getItem('cv_client_id_v3');
+                this.currentFileId = null;
+                this.chart = null;
+                this.highlightTimeout = null; // For Debouncing
+
+                if (!this.clientId) {
+                    this.clientId = crypto.randomUUID();
+                    localStorage.setItem('cv_client_id_v3', this.clientId);
+                }
+
+                this.init();
+            }
+
+            init() {
+                document.getElementById('display-client-id').textContent = this.clientId;
+                document.getElementById('error-your-id').textContent = this.clientId;
+                
+                this.renderFileList();
+                this.renderDashboard();
+                this.typeWriter("CodeVault Systems Online...", "welcome-msg");
+
+                // Global Shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        if (!document.getElementById('view-editor').classList.contains('hidden')) {
+                            this.saveFile();
+                        }
+                    }
+                    // ESC to close panels
+                    if(e.key === 'Escape') {
+                        this.closePanel();
+                        document.getElementById('raw-modal').close();
+                    }
+                });
+
+                // Search
+                document.getElementById('search-input').addEventListener('input', (e) => this.renderFileList(e.target.value));
+            }
+
+            // --- UI Effects ---
+
+            typeWriter(text, elementId, speed = 50) {
+                let i = 0;
+                const el = document.getElementById(elementId);
+                if(!el) return;
+                el.innerHTML = "";
+                const timer = setInterval(() => {
+                    if (i < text.length) {
+                        el.innerHTML += text.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(timer);
+                    }
+                }, speed);
+            }
+
+            toast(msg, type = 'info') {
+                const c = document.getElementById('toast-container');
+                const d = document.createElement('div');
+                const colors = {
+                    'success': 'bg-emerald-600 border-emerald-400',
+                    'error': 'bg-red-600 border-red-400',
+                    'info': 'bg-gray-800 border-gray-600'
+                };
+                const icons = {
+                    'success': 'fa-check-circle',
+                    'error': 'fa-triangle-exclamation',
+                    'info': 'fa-info-circle'
+                };
+                
+                d.className = `${colors[type]} border text-white px-4 py-3 rounded shadow-xl text-sm font-medium flex items-center gap-3 animate-slide-up backdrop-blur-md min-w-[250px]`;
+                d.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${msg}`;
+                c.appendChild(d);
+                setTimeout(() => {
+                    d.style.opacity = '0';
+                    setTimeout(() => d.remove(), 300);
+                }, 3000);
+            }
+
+            toggleSidebar() {
+                const sb = document.getElementById('sidebar');
+                const ov = document.getElementById('mobile-overlay');
+                sb.classList.toggle('-translate-x-full');
+                ov.classList.toggle('hidden');
+            }
+
+            // --- Navigation ---
+
+            navTo(view) {
+                if (window.innerWidth < 768) { 
+                    document.getElementById('sidebar').classList.add('-translate-x-full');
+                    document.getElementById('mobile-overlay').classList.add('hidden');
+                }
+
+                document.querySelectorAll('#view-container > div').forEach(el => el.classList.add('hidden'));
+                const target = document.getElementById(`view-${view}`);
+                if(target) target.classList.remove('hidden');
+
+                if (view === 'dashboard') {
+                    this.renderDashboard();
+                    this.currentFileId = null;
+                    this.renderFileList(); 
+                }
+            }
+
+            // --- File System ---
+
+            renderFileList(filter = '') {
+                const list = document.getElementById('file-list');
+                list.innerHTML = '';
+                
+                const filtered = this.files.filter(f => f.name.toLowerCase().includes(filter.toLowerCase()));
+                
+                if (filtered.length === 0) {
+                    list.innerHTML = `<div class="p-4 text-center text-gray-600 text-[10px] uppercase tracking-wider">No Repositories</div>`;
+                    return;
+                }
+
+                filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+                const grouped = {};
+                const rootFiles = [];
+
+                filtered.forEach(file => {
+                    if (file.folder) {
+                        if (!grouped[file.folder]) grouped[file.folder] = [];
+                        grouped[file.folder].push(file);
+                    } else {
+                        rootFiles.push(file);
+                    }
+                });
+
+                const renderItem = (file, isNested = false) => {
+                    const isActive = this.currentFileId === file.id;
+                    const isLocked = file.isClientIdLocked || file.password;
+                    
+                    const el = document.createElement('div');
+                    el.className = `clickable-area group flex items-center justify-between p-2.5 rounded-lg transition-all duration-200 border border-transparent ${isActive ? 'bg-cyan-900/20 border-cyan-500/30' : 'hover:bg-gray-800/50'} ${isNested ? 'ml-2' : ''}`;
+                    
+                    // Fixed: Immediate open and navigation
+                    el.onclick = (e) => {
+                        e.stopPropagation();
+                        this.openFile(file.id);
+                    };
+
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden pointer-events-none">
+                            <div class="text-lg w-5 text-center ${isActive ? 'text-cyan-400' : this.getLangColor(file.language)}">
+                                <i class="${this.getLangIcon(file.language)}"></i>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-sm font-medium ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'} truncate transition-colors">${file.name}</span>
+                                <span class="text-[10px] text-gray-600 truncate">${new Date(file.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${isLocked ? '<i class="fa-solid fa-lock text-[10px] text-red-400 opacity-70"></i>' : ''}
+                            <button onclick="event.stopPropagation(); app.deleteFile('${file.id}')" class="w-8 h-8 rounded flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    return el;
+                };
+
+                Object.keys(grouped).sort().forEach(folder => {
+                    const header = document.createElement('div');
+                    header.className = 'folder-header';
+                    header.innerHTML = `<i class="fa-regular fa-folder"></i> ${folder}`;
+                    list.appendChild(header);
+                    grouped[folder].forEach(file => list.appendChild(renderItem(file, true)));
+                });
+
+                if (Object.keys(grouped).length > 0 && rootFiles.length > 0) {
+                     const header = document.createElement('div');
+                     header.className = 'folder-header';
+                     header.innerHTML = `<i class="fa-regular fa-file"></i> ROOT`;
+                     list.appendChild(header);
+                }
+
+                rootFiles.forEach(file => list.appendChild(renderItem(file)));
+            }
+
+            getLangIcon(lang) {
+                const map = {
+                    'javascript': 'fa-brands fa-js', 'html': 'fa-brands fa-html5', 'css': 'fa-brands fa-css3-alt',
+                    'python': 'fa-brands fa-python', 'java': 'fa-brands fa-java', 'lua': 'fa-solid fa-moon',
+                    'rust': 'fa-solid fa-gear', 'sql': 'fa-solid fa-database', 'bash': 'fa-solid fa-terminal',
+                    'json': 'fa-solid fa-code', 'cpp': 'fa-solid fa-c', 'csharp': 'fa-solid fa-hashtag', 'go': 'fa-brands fa-golang'
+                };
+                return map[lang] || 'fa-solid fa-file-code';
+            }
+
+            getLangColor(lang) {
+                const map = {
+                    'javascript': 'text-yellow-400', 'html': 'text-orange-500', 'css': 'text-blue-400',
+                    'python': 'text-blue-300', 'java': 'text-red-400', 'lua': 'text-blue-500',
+                    'rust': 'text-orange-300', 'sql': 'text-pink-400', 'bash': 'text-green-400', 'go': 'text-cyan-400'
+                };
+                return map[lang] || 'text-gray-500';
+            }
+
+            // --- Dashboard Logic ---
+
+            renderDashboard() {
+                document.getElementById('dash-total-files').textContent = `${this.files.length} Files`;
+                const uniqueLangs = new Set(this.files.map(f => f.language)).size;
+                document.getElementById('dash-languages').textContent = `${uniqueLangs} Langs`;
+
+                const charCount = this.files.reduce((a, b) => a + (b.content?.length || 0), 0);
+                const kb = (charCount / 1024).toFixed(2);
+                document.getElementById('storage-used').textContent = `${kb} KB / 5.0 MB`;
+                document.getElementById('storage-bar').style.width = `${Math.min((kb / 5000) * 100, 100)}%`;
+
+                const timeline = document.getElementById('recent-activity-list');
+                timeline.innerHTML = '';
+                const recents = [...this.files].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 5);
+                
+                if(recents.length === 0) {
+                    timeline.innerHTML = '<div class="text-gray-600 text-sm italic py-4">No recent activity detected.</div>';
+                } else {
+                    recents.forEach((f, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'flex gap-4 pb-6 relative border-l border-gray-700 last:border-0 last:pb-0 ml-2 pl-6';
+                        div.innerHTML = `
+                            <div class="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ${idx===0?'bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.8)]':'bg-gray-600'}"></div>
+                            <div class="cursor-pointer group" onclick="app.openFile('${f.id}')">
+                                <div class="text-sm font-medium text-gray-300 group-hover:text-cyan-400 transition-colors">${f.folder ? f.folder + '/' : ''}${f.name}</div>
+                                <div class="text-[11px] text-gray-500">Modified: ${new Date(f.updatedAt).toLocaleString()}</div>
+                                <div class="mt-1 inline-block px-1.5 py-0.5 rounded text-[10px] bg-gray-800 text-gray-400 border border-gray-700 font-mono">${f.language}</div>
+                            </div>
+                        `;
+                        timeline.appendChild(div);
+                    });
+                }
+
+                const ctx = document.getElementById('chart-languages').getContext('2d');
+                const counts = {};
+                this.files.forEach(f => counts[f.language] = (counts[f.language] || 0) + 1);
+                
+                if (this.chart) this.chart.destroy();
+                
+                this.chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(counts),
+                        datasets: [{
+                            data: Object.values(counts),
+                            backgroundColor: ['#22d3ee', '#f87171', '#fbbf24', '#a78bfa', '#34d399', '#60a5fa'],
+                            borderColor: '#1e293b',
+                            borderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: {
+                            legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Inter', size: 10 }, boxWidth: 10 } }
+                        }
+                    }
+                });
+            }
+
+            // --- Export / Import System ---
+
+            exportData() {
+                const dataStr = JSON.stringify(this.files, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `codevault_backup_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.toast('System Backup Complete', 'success');
+            }
+
+            importData(input) {
+                const file = input.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (!Array.isArray(imported)) throw new Error("Invalid Format");
+                        
+                        let count = 0;
+                        imported.forEach(impFile => {
+                            const idx = this.files.findIndex(f => f.id === impFile.id);
+                            if (idx !== -1) {
+                                this.files[idx] = impFile;
+                            } else {
+                                this.files.push(impFile);
+                            }
+                            count++;
+                        });
+
+                        localStorage.setItem('cv_ultima_db', JSON.stringify(this.files));
+                        this.renderDashboard();
+                        this.toast(`Restored ${count} repositories`, 'success');
+                    } catch (err) {
+                        this.toast('Import Failed: Invalid JSON', 'error');
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(file);
+                input.value = ''; 
+            }
+
+            // --- Editor ---
+
+            createNewFile() {
+                this.currentFileId = null;
+                document.getElementById('file-name-input').value = '';
+                document.getElementById('code-input').value = '';
+                document.getElementById('language-select').value = 'javascript';
+                
+                this.changeLanguage();
+                this.navTo('editor');
+                // Force reset highlight
+                const codeEl = document.getElementById('code-highlight');
+                codeEl.textContent = '';
+                this.updateCursorStats();
+                document.getElementById('char-count').textContent = '0 chars';
+                document.getElementById('editor-status').innerHTML = '<i class="fa-solid fa-plus text-cyan-400 mr-1"></i>New Buffer';
+            }
+
+            handleInput() {
+                // 1. Immediate updates for UI responsiveness
+                const text = document.getElementById('code-input').value;
+                document.getElementById('char-count').textContent = `${text.length} chars`;
+                this.updateCursorStats();
+
+                // 2. Debounced Highlighting (Fixes Lag on long code)
+                if (this.highlightTimeout) clearTimeout(this.highlightTimeout);
+                
+                this.highlightTimeout = setTimeout(() => {
+                    const codeEl = document.getElementById('code-highlight');
+                    // Escape HTML is handled by textContent automatically, but Prism needs raw text
+                    codeEl.textContent = text;
+                    Prism.highlightElement(codeEl);
+                }, 150); // 150ms delay is enough to feel instant but save CPU
+            }
+
+            syncScroll() {
+                const input = document.getElementById('code-input');
+                const display = document.getElementById('code-display');
+                
+                // Use requestAnimationFrame for smoother scrolling
+                requestAnimationFrame(() => {
+                    display.scrollTop = input.scrollTop;
+                    display.scrollLeft = input.scrollLeft;
+                });
+            }
+
+            handleTab(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const input = e.target;
+                    const start = input.selectionStart;
+                    const end = input.selectionEnd;
+                    const value = input.value;
+                    input.value = value.substring(0, start) + "    " + value.substring(end);
+                    input.selectionStart = input.selectionEnd = start + 4;
+                    this.handleInput(); // Trigger debounce highlight
+                }
+            }
+
+            updateCursorStats() {
+                const input = document.getElementById('code-input');
+                const textStr = input.value.substr(0, input.selectionStart);
+                const lines = textStr.split("\n");
+                const row = lines.length;
+                const col = lines[lines.length - 1].length + 1;
+                document.getElementById('cursor-pos').textContent = `Ln ${row}, Col ${col}`;
+            }
+
+            changeLanguage() {
+                const lang = document.getElementById('language-select').value;
+                const map = {
+                    'javascript': 'language-javascript', 'html': 'language-markup', 'css': 'language-css',
+                    'python': 'language-python', 'lua': 'language-lua', 'json': 'language-json',
+                    'java': 'language-java', 'cpp': 'language-cpp', 'csharp': 'language-csharp',
+                    'sql': 'language-sql', 'bash': 'language-bash', 'go': 'language-go', 'rust': 'language-rust'
+                };
+                document.getElementById('code-highlight').className = map[lang] || 'language-none';
+                document.getElementById('current-lang-icon').className = this.getLangIcon(lang);
+                document.getElementById('lang-display').textContent = lang.toUpperCase();
+                
+                // Trigger highlight immediately on language change
+                const codeEl = document.getElementById('code-highlight');
+                codeEl.textContent = document.getElementById('code-input').value;
+                Prism.highlightElement(codeEl);
+            }
+
+            // --- Panel Tools ---
+
+            togglePanel(type, forceDashboard = false) {
+                if(forceDashboard) {
+                    this.createNewFile();
+                }
+                
+                const panel = document.getElementById('tools-panel');
+                const content = document.getElementById('panel-content');
+                
+                panel.classList.remove('hidden');
+
+                if (type === 'fetch') {
+                    content.innerHTML = `
+                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Import Raw Data</h4>
+                        <div class="flex gap-2">
+                            <input type="text" id="fetch-url" placeholder="https://raw.githubusercontent.com/..." 
+                                   class="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono">
+                            <button onclick="app.doFetch()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded font-bold text-xs"><i class="fa-solid fa-download mr-1"></i> PULL</button>
+                        </div>
+                    `;
+                } else if (type === 'security') {
+                    const file = this.files.find(f => f.id === this.currentFileId) || {};
+                    content.innerHTML = `
+                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-3">Security Protocols</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-900 p-3 rounded border border-gray-700 flex items-start gap-3">
+                                <input type="checkbox" id="input-lock-client" ${file.isClientIdLocked ? 'checked' : ''} class="mt-1">
+                                <div>
+                                    <label for="input-lock-client" class="text-sm font-bold text-gray-200 cursor-pointer">Hardware Lock</label>
+                                    <p class="text-[10px] text-gray-500">Binds file to Client ID: ${this.clientId.substring(0,8)}...</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-900 p-3 rounded border border-gray-700">
+                                <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Passkey Protection</label>
+                                <input type="password" id="input-password" value="${file.password || ''}" placeholder="Set passkey..." class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:border-cyan-500 outline-none">
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            toggleMobileTools() {
+                const panel = document.getElementById('tools-panel');
+                if(!panel.classList.contains('hidden')) {
+                    this.closePanel();
+                    return;
+                }
+                panel.classList.remove('hidden');
+                document.getElementById('panel-content').innerHTML = `
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="app.togglePanel('fetch')" class="bg-gray-700 p-3 rounded text-white text-xs"><i class="fa-solid fa-cloud-arrow-down mb-1 block text-lg"></i>Fetch</button>
+                        <button onclick="app.togglePanel('security')" class="bg-gray-700 p-3 rounded text-white text-xs"><i class="fa-solid fa-shield-halved mb-1 block text-lg"></i>Security</button>
+                        <button onclick="app.generateRawLink()" class="col-span-2 bg-gray-700 p-3 rounded text-white text-xs"><i class="fa-solid fa-link mb-1 block text-lg"></i>Generate Raw Link</button>
+                    </div>
+                `;
+            }
+
+            closePanel() {
+                document.getElementById('tools-panel').classList.add('hidden');
+            }
+
+            // --- Actions ---
+
+            async doFetch() {
+                const url = document.getElementById('fetch-url').value;
+                if (!url) return;
+                const btn = document.querySelector('#tools-panel button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+                
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error('Fetch Error');
+                    const text = await res.text();
+                    document.getElementById('code-input').value = text;
+                    
+                    // Auto-detect Lang
+                    let fname = url.substring(url.lastIndexOf('/')+1).split('?')[0]; // clean filename
+                    const ext = fname.split('.').pop().toLowerCase();
+                    const langMap = { 'js':'javascript', 'py':'python', 'lua':'lua', 'java':'java', 'html':'html', 'css':'css', 'json':'json', 'sql':'sql', 'sh':'bash', 'go':'go', 'rs':'rust' };
+                    if(langMap[ext]) {
+                        document.getElementById('language-select').value = langMap[ext];
+                        this.changeLanguage();
+                    } else {
+                        // Just trigger highlight
+                        const codeEl = document.getElementById('code-highlight');
+                        codeEl.textContent = text;
+                        Prism.highlightElement(codeEl);
+                    }
+                    
+                    // Set filename but keep editable
+                    if(fname.length < 50) {
+                         document.getElementById('file-name-input').value = fname;
+                    }
+
+                    this.updateCursorStats();
+                    document.getElementById('char-count').textContent = `${text.length} chars`;
+                    this.toast('Data Stream Received', 'success');
+                    this.closePanel();
+                } catch (e) {
+                    this.toast('Connection Failed (CORS?)', 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                }
+            }
+
+            saveFile() {
+                const nameInput = document.getElementById('file-name-input').value.trim() || 'untitled_snippet';
+                
+                // Folder Logic Extraction
+                let folder = null;
+                let name = nameInput;
+                if (nameInput.includes('/')) {
+                    const parts = nameInput.split('/');
+                    name = parts.pop(); // Last part is filename
+                    folder = parts.join('/'); // Join rest as folder path
+                }
+
+                const content = document.getElementById('code-input').value;
+                const lang = document.getElementById('language-select').value;
+                
+                // Security Capture
+                const lockInput = document.getElementById('input-lock-client');
+                const passInput = document.getElementById('input-password');
+                
+                let isLocked = false;
+                let password = null;
+                let allowedIds = [];
+
+                if(lockInput) {
+                    isLocked = lockInput.checked;
+                    password = passInput.value;
+                } else if (this.currentFileId) {
+                    const old = this.files.find(f => f.id === this.currentFileId);
+                    if(old) {
+                        isLocked = old.isClientIdLocked;
+                        password = old.password;
+                        allowedIds = old.allowedClientIds || [];
+                    }
+                }
+
+                if (isLocked) {
+                    if(!allowedIds.includes(this.clientId)) allowedIds.push(this.clientId);
+                }
+
+                const file = {
+                    id: this.currentFileId || crypto.randomUUID(),
+                    name, 
+                    folder, 
+                    content, language: lang,
+                    password, isClientIdLocked: isLocked, allowedClientIds: allowedIds,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (this.currentFileId) {
+                    const idx = this.files.findIndex(f => f.id === this.currentFileId);
+                    this.files[idx] = file;
+                } else {
+                    this.files.push(file);
+                    this.currentFileId = file.id;
+                }
+
+                localStorage.setItem('cv_ultima_db', JSON.stringify(this.files));
+                this.renderFileList();
+                this.toast(`Saved to ${folder ? folder + '/' : ''}${name}`, 'success');
+                document.getElementById('editor-status').innerHTML = '<i class="fa-solid fa-check text-emerald-400 mr-1"></i>Synced';
+            }
+
+            openFile(id) {
+                const file = this.files.find(f => f.id === id);
+                if (!file) return;
+
+                if (file.isClientIdLocked && !file.allowedClientIds.includes(this.clientId)) {
+                    this.showLocked('client', file);
+                    this.currentFileId = id;
+                    this.renderFileList(); // Update active highlight without nav change
+                    return;
+                }
+                if (file.password) {
+                    this.showLocked('password', file);
+                    this.currentFileId = id;
+                    this.renderFileList();
+                    return;
+                }
+
+                this.currentFileId = file.id;
+                const displayPath = file.folder ? `${file.folder}/${file.name}` : file.name;
+                document.getElementById('file-name-input').value = displayPath;
+                
+                document.getElementById('code-input').value = file.content;
+                document.getElementById('language-select').value = file.language;
+                
+                this.navTo('editor'); // Ensure we switch view first
+                this.changeLanguage(); // Then highlight
+                this.renderFileList(); // Highlight sidebar
+            }
+
+            deleteFile(id) {
+                if(!confirm('Confirm deletion of this repository?')) return;
+                this.files = this.files.filter(f => f.id !== id);
+                localStorage.setItem('cv_ultima_db', JSON.stringify(this.files));
+                this.renderFileList();
+                if(this.currentFileId === id) this.navTo('dashboard');
+                this.toast('Repository Purged', 'info');
+            }
+
+            // --- Security View ---
+
+            showLocked(reason, file) {
+                this.navTo('locked');
+                document.getElementById('lock-message').textContent = `Target: ${file.name}`;
+                document.getElementById('password-challenge').classList.add('hidden');
+                document.getElementById('client-id-error').classList.add('hidden');
+
+                if (reason === 'client') {
+                    document.getElementById('client-id-error').classList.remove('hidden');
+                } else {
+                    document.getElementById('password-challenge').classList.remove('hidden');
+                    document.getElementById('unlock-password').value = '';
+                }
+            }
+
+            unlockFile() {
+                const file = this.files.find(f => f.id === this.currentFileId);
+                const val = document.getElementById('unlock-password').value;
+                if(val === file.password) {
+                    this.currentFileId = file.id;
+                    const displayPath = file.folder ? `${file.folder}/${file.name}` : file.name;
+                    document.getElementById('file-name-input').value = displayPath;
+                    document.getElementById('code-input').value = file.content;
+                    document.getElementById('language-select').value = file.language;
+                    
+                    this.navTo('editor');
+                    this.changeLanguage();
+                    this.toast('Access Granted', 'success');
+                } else {
+                    this.toast('Authentication Failed', 'error');
+                }
+            }
+
+            generateRawLink() {
+                const content = document.getElementById('code-input').value;
+                if(!content) { this.toast('Buffer Empty', 'error'); return; }
+                const blob = new Blob([content], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                document.getElementById('raw-link-input').value = url;
+                document.getElementById('raw-link-btn').href = url;
+                document.getElementById('raw-modal').showModal();
+            }
+        }
+
+        const app = new CodeVault();
+    </script>
+</body>
+</html>
